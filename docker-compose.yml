@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  ranker_service:
+    build: ./python/ranker
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./python/ranker:/app  # Hot-reloading for Python
+    environment:
+      - FLASK_ENV=development
+
+  rails_interface:
+    build: ./rails
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./rails:/rails       # Hot-reloading for Ruby
+    depends_on:
+      - ranker_service
