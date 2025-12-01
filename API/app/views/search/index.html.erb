@@ -1,0 +1,26 @@
+<div style="text-align: center; margin-top: 50px;">
+  <h1>Google-Lite</h1>
+  
+  <form action="/search" method="get">
+    <input type="text" name="q" value="<%= @query %>" placeholder="Search..." style="width: 400px; padding: 10px; font-size: 16px;">
+    <button type="submit" style="padding: 10px 20px; font-size: 16px;">Search</button>
+  </form>
+</div>
+
+<% if @results.any? %>
+  <div style="width: 600px; margin: 0 auto; margin-top: 30px;">
+    <p>Found <%= @results.count %> results for "<strong><%= @query %></strong>"</p>
+    
+    <% @results.each do |result| %>
+      <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+        <h3><a href="#"><%= result['title'] %></a></h3>
+        <p style="color: green; font-size: 14px;">Doc ID: <%= result['id'] %></p>
+        <p>This is a snippet for the document. In Phase 4, we will fetch real snippets from Postgres.</p>
+      </div>
+    <% end %>
+  </div>
+<% elsif @query.present? %>
+  <div style="text-align: center; margin-top: 30px;">
+    <p>No results found for "<strong><%= @query %></strong>"</p>
+  </div>
+<% end %>

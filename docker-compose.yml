@@ -11,10 +11,13 @@ services:
       - FLASK_ENV=development
 
   rails_interface:
-    build: ./rails
+    build: ./API
     ports:
       - "3000:3000"
     volumes:
-      - ./rails:/rails       # Hot-reloading for Ruby
+      - ./API:/rails       # Hot-reloading for Ruby
     depends_on:
       - ranker_service
+
+  crawler_service:
+    build: ./cpp/crawler
