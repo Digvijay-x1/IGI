@@ -101,7 +101,7 @@ jobs:
   # 5. Publish Images (CD - Placeholder)
   # Pushes images to GitHub Container Registry on merge to main.
   # publish-images:
-  #   needs: [docker-build, crawler-build, rails-checks, ranker-check]
+  #   needs: [docker-build, crawler-build, rails-checks, ranker-checks]
   #   runs-on: ubuntu-latest
   #   if: github.ref == 'refs/heads/main'
   #   permissions:
