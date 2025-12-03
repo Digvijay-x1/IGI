@@ -1,13 +1,21 @@
-FROM alpine:latest
+FROM ubuntu:latest
 
-# Install C++ compiler and build tools
-RUN apk add --no-cache g++ make cmake
+# Install Build Tools and Libraries
+# libpqxx-dev: C++ adapter for Postgres
+# libhiredis-dev: C adapter for Redis
+# libcurl4-openssl-dev: HTTP Client
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    libcurl4-openssl-dev \
+    libpqxx-dev \
+    libhiredis-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY . .
 
-COPY src/ ./src/
-
-# Compile the crawler
-RUN g++ -o crawler src/main.cpp
+# Build
+RUN cmake src && make
 
 CMD ["./crawler"]

@@ -1,6 +1,28 @@
 version: '3.8'
 
 services:
+# --- The Brain (Queue) ---
+  redis_service:
+    image: redis:alpine
+    ports:
+      - "6380:6379"
+    networks:
+      - search_net
+
+# --- The Memory (Metadata) ---
+  postgres_service:
+    image: postgres:17.2-alpine3.21
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: search_engine
+    volumes:
+      - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql # Runs on first startup
+      - pg_data:/var/lib/postgresql/data # Persistence
+    ports:
+      - "5434:5432"
+    networks:
+      - search_net
   ranker_service:
     build: ./python/ranker
     ports:
@@ -19,5 +41,21 @@ services:
     depends_on:
       - ranker_service
 
+# --- The Worker (Crawler) ---
   crawler_service:
     build: ./cpp/crawler
+    volumes:
+      - ./data/crawled_pages:/shared_data # Shared storage for WARC/HTML
+    depends_on:
+      - redis_service
+      - postgres_service
+    networks:
+      - search_net
+
+volumes:
+  pg_data:       # Persist DB data even if container is deleted
+  crawled_pages: # Share large files between Crawler and Ranker
+
+networks:
+  search_net:
+    driver: bridge

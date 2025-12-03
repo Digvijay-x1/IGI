@@ -14,7 +14,6 @@
 !/tmp/.keep
 !/tmp/pids/
 !/tmp/storage/
-!/tmp/cache/
 !/tmp/sockets/
 /coverage
 /public/system
