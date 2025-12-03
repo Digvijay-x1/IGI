@@ -16,6 +16,7 @@ const int DB_MAX_RETRIES = 10;
 const int DB_RETRY_DELAY_SECONDS = 5;
 const int QUEUE_POLL_INTERVAL_SECONDS = 5;
 const int CRAWL_DELAY_SECONDS = 1;
+const size_t MIN_URL_LENGTH = 10;
 
 // --- CURL Callback ---
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
@@ -53,7 +54,7 @@ std::string download_url(const std::string& url) {
 // --- Helper: Validate URL ---
 bool is_valid_url(const std::string& url) {
     // Basic URL validation: check for http/https scheme and minimum length
-    if (url.length() < 10) return false;
+    if (url.length() < MIN_URL_LENGTH) return false;
     if (url.substr(0, 7) != "http://" && url.substr(0, 8) != "https://") {
         return false;
     }
@@ -201,15 +202,11 @@ int main() {
             continue;
         }
         outFile << html;
-        if (outFile.fail()) {
-            std::cerr << "Failed to write to file: " << filepath << std::endl;
-            outFile.close();
-            // Optionally mark as error in DB here
-            continue;
-        }
         outFile.close();
-        if (outFile.bad()) {
-            std::cerr << "Failed to close file properly: " << filepath << std::endl;
+        
+        // Check if write/close operations succeeded
+        if (!outFile.good()) {
+            std::cerr << "Failed to write or close file properly: " << filepath << std::endl;
             // Optionally mark as error in DB here
             continue;
         }
