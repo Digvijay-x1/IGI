@@ -56,8 +56,11 @@ bool is_valid_url(const std::string& url) {
     // Basic URL validation: check for http/https scheme and minimum length
     if (url.length() < MIN_URL_LENGTH) return false;
     
-    // Check for http:// or https:// prefix
-    return (url.substr(0, 7) == "http://" || url.substr(0, 8) == "https://");
+    // Check for http:// or https:// prefix (safely)
+    if (url.compare(0, 7, "http://") == 0) return true;
+    if (url.compare(0, 8, "https://") == 0) return true;
+    
+    return false;
 }
 
 int main() {
