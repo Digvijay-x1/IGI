@@ -55,11 +55,12 @@ std::string download_url(const std::string& url) {
 bool is_valid_url(const std::string& url) {
     // Basic URL validation: check for http/https scheme and minimum length
     if (url.length() < MIN_URL_LENGTH) return false;
-    if (url.substr(0, 7) != "http://" && url.substr(0, 8) != "https://") {
-        return false;
-    }
-    // Additional validation could be added here
-    return true;
+    
+    // Check for http:// (length 7) or https:// (length 8)
+    if (url.length() >= 7 && url.substr(0, 7) == "http://") return true;
+    if (url.length() >= 8 && url.substr(0, 8) == "https://") return true;
+    
+    return false;
 }
 
 int main() {
@@ -120,8 +121,11 @@ int main() {
         // Push seed to Redis List (RPUSH)
         reply = (redisReply*)redisCommand(redis, "RPUSH crawl_queue %s", SEED_URL.c_str());
         if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
-            std::cerr << "Failed to seed crawl_queue with RPUSH: " 
-                      << (reply && reply->str ? reply->str : "Unknown error") << std::endl;
+            std::string error_msg = "Unknown error";
+            if (reply && reply->str) {
+                error_msg = reply->str;
+            }
+            std::cerr << "Failed to seed crawl_queue with RPUSH: " << error_msg << std::endl;
             if (reply) freeReplyObject(reply);
             redisFree(redis);
             delete C;
@@ -136,10 +140,16 @@ int main() {
         // A. Pop URL from Redis (LPOP)
         reply = (redisReply*)redisCommand(redis, "LPOP crawl_queue");
         
-        if (reply == NULL || reply->type == REDIS_REPLY_NIL) {
-            // std::cout << "Queue empty. Waiting " << QUEUE_POLL_INTERVAL_SECONDS << "s..." << std::endl;
+        if (reply == NULL) {
+            std::cerr << "Redis LPOP command failed" << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(QUEUE_POLL_INTERVAL_SECONDS));
-            if (reply) freeReplyObject(reply);
+            continue;
+        }
+        
+        if (reply->type == REDIS_REPLY_NIL) {
+            // Queue is empty, wait before polling again
+            freeReplyObject(reply);
+            std::this_thread::sleep_for(std::chrono::seconds(QUEUE_POLL_INTERVAL_SECONDS));
             continue;
         }
 
@@ -201,15 +211,18 @@ int main() {
             // Optionally mark as error in DB here
             continue;
         }
-        outFile << html;
-        outFile.close();
         
-        // Check if write/close operations succeeded
+        outFile << html;
+        
+        // Check if write succeeded before closing
         if (!outFile.good()) {
-            std::cerr << "Failed to write or close file properly: " << filepath << std::endl;
+            std::cerr << "Failed to write to file: " << filepath << std::endl;
+            outFile.close();
             // Optionally mark as error in DB here
             continue;
         }
+        
+        outFile.close();
 
         // E. Update DB with file path
         try {
