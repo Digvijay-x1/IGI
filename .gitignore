@@ -30,6 +30,8 @@ API/db/*.sqlite3-journal
 *.out
 cpp/crawler/crawler
 cpp/crawler/build/
+cpp/crawler/CMakeCache.txt
+cpp/crawler/CMakeFiles/
 
 # Docker
 docker-compose.override.yml
