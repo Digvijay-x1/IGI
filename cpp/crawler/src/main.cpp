@@ -207,6 +207,10 @@ int main() {
             W.commit();
             std::cout << "Saved to WARC at offset " << info.offset << " (" << info.length << " bytes)" << std::endl;
 
+            // F. Push to Indexing Queue
+            reply = (redisReply*)redisCommand(redis, "RPUSH indexing_queue %d", doc_id);
+            if (reply) freeReplyObject(reply);
+
         } catch (const std::exception &e) {
             std::cerr << "Error saving WARC/DB: " << e.what() << std::endl;
         }

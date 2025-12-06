@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS documents (
     file_path TEXT, -- Path in shared volume
     "offset" BIGINT, -- Byte offset in the file
     length BIGINT, -- Length of the compressed record
+    doc_length INT DEFAULT 0, -- Number of words in the document
     content_hash VARCHAR(64) -- To detect duplicates
 );
 
