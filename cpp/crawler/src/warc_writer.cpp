@@ -73,9 +73,9 @@ std::string WarcWriter::create_warc_header(const std::string& url, size_t conten
 }
 
 std::string WarcWriter::generate_uuid() {
-    thread_local static std::random_device rd;
-    thread_local static std::mt19937_64 gen(rd());
-    thread_local static std::uniform_int_distribution<uint64_t> dis;
+    thread_local std::random_device rd;
+    thread_local std::mt19937_64 gen(rd());
+    thread_local std::uniform_int_distribution<uint64_t> dis;
 
     uint64_t part1 = dis(gen);
     uint64_t part2 = dis(gen);
