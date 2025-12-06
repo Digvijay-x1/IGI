@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS documents (
     crawled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     file_path TEXT, -- Path in shared volume
     "offset" BIGINT, -- Byte offset in the file
-    length INT, -- Length of the compressed record
+    length BIGINT, -- Length of the compressed record
     content_hash VARCHAR(64) -- To detect duplicates
 );
 

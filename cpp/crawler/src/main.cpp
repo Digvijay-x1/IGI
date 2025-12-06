@@ -61,6 +61,15 @@ bool is_valid_url(const std::string& url) {
     return false;
 }
 
+// --- Helper: Extract Filename ---
+std::string get_filename_from_path(const std::string& path) {
+    size_t found = path.find_last_of("/\\");
+    if (found != std::string::npos) {
+        return path.substr(found + 1);
+    }
+    return path;
+}
+
 int main() {
     std::cout << "--- Crawler Service Started (WARC Mode) ---" << std::endl;
 
@@ -104,15 +113,23 @@ int main() {
 
     // 3. Seed the Queue
     redisReply *reply = (redisReply*)redisCommand(redis, "LLEN crawl_queue");
-    if (reply && reply->integer == 0) {
-        std::cout << "Queue empty. Seeding: " << SEED_URL << std::endl;
-        freeReplyObject(reply);
-        reply = (redisReply*)redisCommand(redis, "RPUSH crawl_queue %s", SEED_URL.c_str());
+    if (reply) {
+        if (reply->integer == 0) {
+            std::cout << "Queue empty. Seeding: " << SEED_URL << std::endl;
+            freeReplyObject(reply);
+            reply = (redisReply*)redisCommand(redis, "RPUSH crawl_queue %s", SEED_URL.c_str());
+            if (!reply || redis->err) {
+                std::cerr << "Failed to seed queue: " << (redis->err ? redis->errstr : "Unknown error") << std::endl;
+            }
+        }
+        if (reply) freeReplyObject(reply);
+    } else {
+        std::cerr << "Failed to check queue length." << std::endl;
     }
-    if (reply) freeReplyObject(reply);
 
     // 4. Initialize WarcWriter
-    WarcWriter warc_writer(WARC_FILENAME);
+    crawler::WarcWriter warc_writer(WARC_FILENAME);
+    std::string warc_db_filename = get_filename_from_path(WARC_FILENAME);
 
     // 5. The Infinite Crawl Loop
     while (true) {
@@ -121,6 +138,12 @@ int main() {
         if (reply == NULL || reply->type == REDIS_REPLY_NIL) {
             if (reply) freeReplyObject(reply);
             std::this_thread::sleep_for(std::chrono::seconds(QUEUE_POLL_INTERVAL_SECONDS));
+            continue;
+        }
+
+        if (reply->type != REDIS_REPLY_STRING) {
+            std::cerr << "Unexpected Redis reply type: " << reply->type << std::endl;
+            freeReplyObject(reply);
             continue;
         }
 
@@ -135,10 +158,15 @@ int main() {
         int doc_id = -1;
         try {
             pqxx::work W(*C);
+            
+            // Suppress deprecated warning for exec_params
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             pqxx::result R = W.exec_params(
                 "INSERT INTO documents (url, status) VALUES ($1, 'processing') ON CONFLICT (url) DO NOTHING RETURNING id",
                 url
             );
+            #pragma GCC diagnostic pop
             
             if (R.empty()) {
                 std::cout << "Skipping duplicate: " << url << std::endl;
@@ -162,14 +190,17 @@ int main() {
 
         // D. Save to WARC
         try {
-            WarcRecordInfo info = warc_writer.write_record(url, html);
+            crawler::WarcRecordInfo info = warc_writer.write_record(url, html);
 
             // E. Update DB
             pqxx::work W(*C);
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             W.exec_params(
                 "UPDATE documents SET status = 'crawled', file_path = $1, \"offset\" = $2, length = $3 WHERE id = $4",
-                "crawled.warc.gz", info.offset, info.length, doc_id
+                warc_db_filename, info.offset, info.length, doc_id
             );
+            #pragma GCC diagnostic pop
             W.commit();
             std::cout << "Saved to WARC at offset " << info.offset << " (" << info.length << " bytes)" << std::endl;
 

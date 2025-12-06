@@ -4,10 +4,13 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <cstdint>
+
+namespace crawler {
 
 struct WarcRecordInfo {
-    long long offset;
-    int length;
+    int64_t offset;
+    int64_t length;
 };
 
 class WarcWriter {
@@ -24,6 +27,9 @@ private:
 
     std::string create_warc_header(const std::string& url, size_t content_length);
     std::string compress_string(const std::string& str);
+    std::string generate_uuid();
 };
+
+} // namespace crawler
 
 #endif // WARC_WRITER_HPP
