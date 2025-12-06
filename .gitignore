@@ -42,4 +42,5 @@ _codeql_detected_source_root
 # data 
 data/crawled_pages/
 *.warc.gz
-*.htmlcpp/crawler/build_test/
+*.html
+cpp/crawler/build_test/
