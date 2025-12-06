@@ -49,7 +49,18 @@ services:
   crawler_service:
     build: ./cpp/crawler
     volumes:
-      - ./data/crawled_pages:/shared_data # Shared storage for WARC/HTML
+      - ./data/crawled_pages:/shared_data
+    depends_on:
+      - redis_service
+      - postgres_service
+    networks:
+      - search_net
+
+# --- The Processor (Indexer) ---
+  indexer_service:
+    build: ./cpp/indexer
+    volumes:
+      - ./data/crawled_pages:/shared_data
     depends_on:
       - redis_service
       - postgres_service
