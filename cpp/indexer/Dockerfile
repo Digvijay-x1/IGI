@@ -11,8 +11,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY . .
 
-RUN cmake src && make
+# Copy necessary directories
+COPY cpp/indexer cpp/indexer
+COPY cpp/crawler cpp/crawler
 
-CMD ["./indexer"]
+# Set working directory to indexer for building
+WORKDIR /app/cpp/indexer
+
+RUN mkdir -p build && cd build && cmake ../src && make && ctest --output-on-failure
+
+
+CMD ["./build/indexer"]

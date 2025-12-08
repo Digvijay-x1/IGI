@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-# --- The Brain (Queue) ---
+  # --- The Brain (Queue) ---
   redis_service:
     image: redis:alpine
     ports:
@@ -9,7 +9,7 @@ services:
     networks:
       - search_net
 
-# --- The Memory (Metadata) ---
+  # --- The Memory (Metadata) ---
   postgres_service:
     image: postgres:17.2-alpine3.21
     environment:
@@ -28,7 +28,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./python/ranker:/app  # Hot-reloading for Python
+      - ./python/ranker:/app # Hot-reloading for Python
     environment:
       - FLASK_ENV=development
     networks:
@@ -39,13 +39,13 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./API:/rails       # Hot-reloading for Ruby
+      - ./API:/rails # Hot-reloading for Ruby
     depends_on:
       - ranker_service
     networks:
       - search_net
 
-# --- The Worker (Crawler) ---
+  # --- The Worker (Crawler) ---
   crawler_service:
     build: ./cpp/crawler
     volumes:
@@ -56,11 +56,18 @@ services:
     networks:
       - search_net
 
-# --- The Processor (Indexer) ---
+  # --- The Processor (Indexer) ---
   indexer_service:
-    build: ./cpp/indexer
+    build:
+      context: .
+      dockerfile: ./cpp/indexer/Dockerfile
     volumes:
       - ./data/crawled_pages:/shared_data
+    environment:
+      - DB_HOST=postgres_service
+      - DB_NAME=search_engine
+      - DB_USER=admin
+      - DB_PASS=password123
     depends_on:
       - redis_service
       - postgres_service
@@ -68,8 +75,9 @@ services:
       - search_net
 
 volumes:
-  pg_data:       # Persist DB data even if container is deleted
-  crawled_pages: # Share large files between Crawler and Ranker
+  pg_data: # Persist DB data even if container is deleted
+  crawled_pages:
+    # Share large files between Crawler and Ranker
 
 networks:
   search_net:

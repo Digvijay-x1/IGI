@@ -36,6 +36,8 @@ docker-compose.override.yml
 node_modules/
 cpp/crawler/src/build/
 cpp/indexer/src/build/
+cpp/indexer/build/
+
 
 # CodeQL
 _codeql_detected_source_root
