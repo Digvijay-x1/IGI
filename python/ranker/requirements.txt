@@ -1,1 +1,4 @@
-flask==3.0.0
+flask
+git+https://github.com/twmht/python-rocksdb.git
+psycopg2-binary
+numpy
