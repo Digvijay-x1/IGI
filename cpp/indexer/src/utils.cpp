@@ -52,8 +52,8 @@ std::string decompress_gzip(const std::string& compressed_data) {
     if (compressed_data.size() > UINT_MAX) {
         throw std::runtime_error("Compressed data too large (> 4GB)");
     }
-+    
-+    const size_t MAX_DECOMPRESSED_SIZE = 100 * 1024 * 1024; // 100MB limit
+    
+    const size_t MAX_DECOMPRESSED_SIZE = 100 * 1024 * 1024; // 100MB limit
 
     z_stream zs;
     zs.zalloc = Z_NULL;
@@ -81,10 +81,10 @@ std::string decompress_gzip(const std::string& compressed_data) {
         if (outstring.size() < zs.total_out) {
             outstring.append(buffer, zs.total_out - outstring.size());
         }
-+        if (outstring.size() > MAX_DECOMPRESSED_SIZE) {
-+            inflateEnd(&zs);
-+            throw std::runtime_error("Decompressed data exceeds maximum allowed size");
-+        }
+        if (outstring.size() > MAX_DECOMPRESSED_SIZE) {
+            inflateEnd(&zs);
+            throw std::runtime_error("Decompressed data exceeds maximum allowed size");
+        }
     } while (ret == Z_OK);
 
     inflateEnd(&zs);
