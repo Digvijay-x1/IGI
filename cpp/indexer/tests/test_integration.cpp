@@ -5,22 +5,45 @@
 #include <cassert>
 #include <filesystem>
 #include <vector>
+#include <stdexcept>
 
-// Simple assertion macro
+// Simple assertion macro that throws instead of exiting
 #define ASSERT(condition, message) \
     do { \
         if (!(condition)) { \
-            std::cerr << "Assertion failed: " << (message) << "\n" \
-                      << "File: " << __FILE__ << ", Line: " << __LINE__ << std::endl; \
-            std::exit(EXIT_FAILURE); \
+            throw std::runtime_error(std::string("Assertion failed: ") + (message) + \
+                                     "\nFile: " + __FILE__ + ", Line: " + std::to_string(__LINE__)); \
         } \
     } while (false)
 
+// RAII Guard for file cleanup
+class FileCleaner {
+public:
+    explicit FileCleaner(std::string filename) : filename_(std::move(filename)) {
+        if (std::filesystem::exists(filename_)) {
+            std::filesystem::remove(filename_);
+        }
+    }
+
+    ~FileCleaner() {
+        if (std::filesystem::exists(filename_)) {
+            std::filesystem::remove(filename_);
+        }
+    }
+
+    // Disable copy
+    FileCleaner(const FileCleaner&) = delete;
+    FileCleaner& operator=(const FileCleaner&) = delete;
+
+private:
+    std::string filename_;
+};
+
 void test_crawler_indexer_integration() {
     std::string filename = "test_integration.warc.gz";
-    if (std::filesystem::exists(filename)) {
-        std::filesystem::remove(filename);
-    }
+    
+    // RAII guard ensures cleanup on return or exception
+    FileCleaner cleaner(filename);
 
     std::string url = "http://example.com";
     std::string content = "<html><body>Integration Test</body></html>";
@@ -54,7 +77,6 @@ void test_crawler_indexer_integration() {
     ASSERT(full_warc_record.find(content) != std::string::npos, "Decompressed record should contain original HTML");
     ASSERT(full_warc_record.find(url) != std::string::npos, "Decompressed record should contain URL");
 
-    std::filesystem::remove(filename);
     std::cout << "test_crawler_indexer_integration passed" << std::endl;
 }
 
