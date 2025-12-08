@@ -1,0 +1,4 @@
+cpp/indexer/build/
+cpp/crawler/build/
+.git/
+data/

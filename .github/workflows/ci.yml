@@ -46,6 +46,37 @@ jobs:
       run: ctest --output-on-failure
 
 
+  # 3. C++ Indexer Native Build
+  # Compiles the indexer directly on the runner to catch syntax/linker errors fast.
+  indexer-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./cpp/indexer
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libpqxx-dev libhiredis-dev librocksdb-dev libgumbo-dev zlib1g-dev
+
+    - name: Create Build Directory
+      run: mkdir -p build
+
+    - name: Configure CMake
+      run: cmake ../src
+      working-directory: ./cpp/indexer/build
+
+    - name: Compile
+      run: make
+      working-directory: ./cpp/indexer/build
+
+    - name: Run Tests
+      run: ctest --output-on-failure
+      working-directory: ./cpp/indexer/build
+
+
   # 3. Rails API Checks
   # Runs linting and security scans for the Rails API.
   rails-checks:
