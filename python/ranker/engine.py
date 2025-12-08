@@ -56,7 +56,7 @@ class Ranker:
             with self.db_conn.cursor() as cur:
                 cur.execute("SELECT AVG(doc_length) FROM documents")
                 avg = cur.fetchone()[0]
-                return float(avg) if avg else 0.0
+                return float(avg) if avg else 100.0 #Default to 100 to avoid dividing by 0 
         except Exception as e:
             print(f"Error calculating avgdl: {e}")
             return 100.0
@@ -88,7 +88,7 @@ class Ranker:
                         postings_str = val.decode('utf-8')
                 except Exception as e:
                     print(f"Error fetching token {token}: {e}")
-            elif not ROCKSDB_AVAILABLE:
+            else:
                 # Fallback to mock
                 postings_str = self.mock_index.get(token)
 
