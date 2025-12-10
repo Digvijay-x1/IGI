@@ -4,13 +4,13 @@ import psycopg2
 import numpy as np
 from collections import defaultdict
 
-# Try to import rocksdict, fallback to mock if failed
+# Try to import our custom C++ extension
 try:
-    from rocksdict import Rdict, Options, AccessType
+    from rocksdb_client import RocksDBReader
     ROCKSDB_AVAILABLE = True
 except ImportError:
     ROCKSDB_AVAILABLE = False
-    print("WARNING: rocksdict not available. Using Mock Index.")
+    print("WARNING: rocksdb_client extension not available. Using Mock Index.")
 
 class Ranker:
     def __init__(self):
@@ -42,7 +42,7 @@ class Ranker:
         if ROCKSDB_AVAILABLE:
             try:
                 # We only need read access
-                self.index_db = Rdict(rocksdb_path, options=Options(), access_type=AccessType.read_only())
+                self.index_db = RocksDBReader(rocksdb_path)
                 print(f"Opened RocksDB at {rocksdb_path}")
             except Exception as e:
                 print(f"Failed to open RocksDB: {e}")

@@ -24,5 +24,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir "Cython<3"
 RUN pip3 install --no-cache-dir -r requirements.txt
+
 COPY . .
+# Build the C++ extension
+RUN pip3 install .
+
 CMD ["python3", "app.py"]
