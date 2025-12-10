@@ -205,29 +205,45 @@ class Ranker:
         
         # Fetch Metadata for top results
         results = []
-        if self.db_conn:
+        if self.db_conn and sorted_docs:
             try:
+                top_doc_ids = [doc_id for doc_id, _ in sorted_docs]
                 with self.db_conn.cursor() as cur:
+                    # Fetch all metadata in one query
+                    if len(top_doc_ids) == 1:
+                        query = "SELECT id, url, title, snippet FROM documents WHERE id = %s"
+                        params = (top_doc_ids[0],)
+                    else:
+                        query = "SELECT id, url, title, snippet FROM documents WHERE id IN %s"
+                        params = (tuple(top_doc_ids),)
+                    
+                    cur.execute(query, params)
+                    rows = cur.fetchall()
+                    
+                    # Create a lookup map
+                    meta_map = {r[0]: {'url': r[1], 'title': r[2], 'snippet': r[3]} for r in rows}
+                    
                     for doc_id, score in sorted_docs:
-                        cur.execute("SELECT url FROM documents WHERE id = %s", (doc_id,))
-                        row = cur.fetchone()
-                        if row:
+                        if doc_id in meta_map:
+                            meta = meta_map[doc_id]
                             results.append({
                                 "id": doc_id,
-                                "url": row[0],
+                                "url": meta['url'],
                                 "score": score,
-                                "title": row[0] # Use URL as title for now
+                                "title": meta['title'] if meta['title'] else meta['url'], # Fallback to URL if title is missing
+                                "snippet": meta['snippet'] if meta['snippet'] else "No preview available."
                             })
             except Exception as e:
                 print(f"Error fetching metadata: {e}")
         else:
-            # Fallback if DB is down
+            # Fallback if DB is down or no results
             for doc_id, score in sorted_docs:
                 results.append({
                     "id": doc_id,
                     "url": f"http://mock-url.com/{doc_id}",
                     "score": score,
-                    "title": f"Mock Document {doc_id}"
+                    "title": f"Mock Document {doc_id}",
+                    "snippet": "This is a mock snippet because the DB is unavailable."
                 })
                     
         return results

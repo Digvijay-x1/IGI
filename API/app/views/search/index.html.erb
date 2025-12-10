@@ -13,9 +13,9 @@
     
     <% @results.each do |result| %>
       <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-        <h3><a href="#"><%= result['title'] %></a></h3>
-        <p style="color: green; font-size: 14px;">Doc ID: <%= result['id'] %></p>
-        <p>This is a snippet for the document. In Phase 4, we will fetch real snippets from Postgres.</p>
+        <h3><a href="<%= result['url'] %>"><%= result['title'] %></a></h3>
+        <p style="color: green; font-size: 14px;"><%= result['url'] %></p>
+        <p><%= result['snippet'] %></p>
       </div>
     <% end %>
   </div>
