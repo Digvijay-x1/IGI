@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS documents (
     "offset" BIGINT, -- Byte offset in the file
     length BIGINT, -- Length of the compressed record
     doc_length INT DEFAULT 0, -- Number of words in the document
+    title TEXT, -- Page title extracted from HTML
+    snippet TEXT, -- Short text preview (first ~200 chars)
     content_hash VARCHAR(64) -- To detect duplicates
 );
 
