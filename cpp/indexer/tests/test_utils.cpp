@@ -41,11 +41,11 @@ void test_tokenize_special_chars() {
     std::cout << "test_tokenize_special_chars passed" << std::endl;
 }
 
-// --- Test: clean_text ---
+// --- Test: extract_content ---
 void test_clean_text_simple() {
     const char* html = "<html><body><p>Hello World</p></body></html>";
     GumboOutput* output = gumbo_parse(html);
-    std::string text = indexer::clean_text(output->root);
+    std::string text = indexer::extract_content(output->root).text;
     gumbo_destroy_output(&kGumboDefaultOptions, output);
     // Text should contain "Hello World" (with possible surrounding whitespace)
     ASSERT(text.find("Hello World") != std::string::npos, "Should extract 'Hello World'");
@@ -55,7 +55,7 @@ void test_clean_text_simple() {
 void test_clean_text_ignores_script() {
     const char* html = "<html><body><script>alert('evil')</script><p>Clean</p></body></html>";
     GumboOutput* output = gumbo_parse(html);
-    std::string text = indexer::clean_text(output->root);
+    std::string text = indexer::extract_content(output->root).text;
     gumbo_destroy_output(&kGumboDefaultOptions, output);
     ASSERT(text.find("alert") == std::string::npos, "Should not contain script content");
     ASSERT(text.find("Clean") != std::string::npos, "Should contain 'Clean'");
@@ -65,11 +65,21 @@ void test_clean_text_ignores_script() {
 void test_clean_text_ignores_style() {
     const char* html = "<html><head><style>body{color:red}</style></head><body><p>Styled</p></body></html>";
     GumboOutput* output = gumbo_parse(html);
-    std::string text = indexer::clean_text(output->root);
+    std::string text = indexer::extract_content(output->root).text;
     gumbo_destroy_output(&kGumboDefaultOptions, output);
     ASSERT(text.find("color") == std::string::npos, "Should not contain style content");
     ASSERT(text.find("Styled") != std::string::npos, "Should contain 'Styled'");
     std::cout << "test_clean_text_ignores_style passed" << std::endl;
+}
+
+void test_extract_title() {
+    const char* html = "<html><head><title>My Title</title></head><body><p>Content</p></body></html>";
+    GumboOutput* output = gumbo_parse(html);
+    indexer::ExtractedContent content = indexer::extract_content(output->root);
+    gumbo_destroy_output(&kGumboDefaultOptions, output);
+    ASSERT(content.title == "My Title", "Should extract title");
+    ASSERT(content.text.find("Content") != std::string::npos, "Should extract content");
+    std::cout << "test_extract_title passed" << std::endl;
 }
 
 // --- Test: decompress_gzip ---
@@ -131,6 +141,7 @@ int main() {
         test_clean_text_simple();
         test_clean_text_ignores_script();
         test_clean_text_ignores_style();
+        test_extract_title();
         test_decompress_gzip_basic();
         test_decompress_gzip_empty();
         std::cout << "All tests passed!" << std::endl;

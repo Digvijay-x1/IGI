@@ -1,5 +1,5 @@
 Cython<3.0
 flask
-rocksdict
+pybind11
 psycopg2-binary
 numpy

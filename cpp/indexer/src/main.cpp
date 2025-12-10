@@ -128,8 +128,16 @@ int main() {
             std::string html_content = full_warc_record.substr(header_end + 4);
             
             GumboOutput* output = gumbo_parse(html_content.c_str());
-            std::string plain_text = clean_text(output->root);
+            ExtractedContent content = extract_content(output->root);
+            std::string plain_text = content.text;
+            std::string title = content.title;
             gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+            // Generate Snippet (first 200 chars)
+            std::string snippet = plain_text.substr(0, 200);
+            // Basic cleanup of snippet (remove newlines)
+            std::replace(snippet.begin(), snippet.end(), '\n', ' ');
+            std::replace(snippet.begin(), snippet.end(), '\r', ' ');
 
             // E. Tokenize & Index
             std::vector<std::string> tokens = tokenize(plain_text);
@@ -160,9 +168,10 @@ int main() {
                 }
             }
 
-            // F. Update Doc Length
+            // F. Update Doc Length, Title, and Snippet
             pqxx::work W2(*C);
-            W2.exec_params("UPDATE documents SET doc_length = $1 WHERE id = $2", tokens.size(), doc_id);
+            W2.exec_params("UPDATE documents SET doc_length = $1, title = $2, snippet = $3 WHERE id = $4", 
+                           tokens.size(), title, snippet, doc_id);
             W2.commit();
             
             std::cout << "Indexed " << tokens.size() << " words for Doc " << doc_id << std::endl;

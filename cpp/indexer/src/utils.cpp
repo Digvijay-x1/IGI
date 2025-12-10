@@ -34,24 +34,36 @@ std::string build_db_conn_str() {
     }
 }
 
-std::string clean_text(GumboNode* node) {
+void extract_content_recursive(GumboNode* node, ExtractedContent& content) {
     if (node->type == GUMBO_NODE_TEXT) {
-        return std::string(node->v.text.text);
+        content.text.append(node->v.text.text);
     } else if (node->type == GUMBO_NODE_ELEMENT &&
                node->v.element.tag != GUMBO_TAG_SCRIPT &&
                node->v.element.tag != GUMBO_TAG_STYLE) {
-        std::string contents = "";
+        
+        if (node->v.element.tag == GUMBO_TAG_TITLE) {
+            if (node->v.element.children.length > 0) {
+                GumboNode* title_text = static_cast<GumboNode*>(node->v.element.children.data[0]);
+                if (title_text->type == GUMBO_NODE_TEXT) {
+                    content.title = title_text->v.text.text;
+                }
+            }
+        }
+
         GumboVector* children = &node->v.element.children;
         for (unsigned int i = 0; i < children->length; ++i) {
-            const std::string text = clean_text(static_cast<GumboNode*>(children->data[i]));
-            if (i != 0 && !text.empty()) {
-                contents.append(" ");
+            extract_content_recursive(static_cast<GumboNode*>(children->data[i]), content);
+            if (i != children->length - 1) {
+                content.text.append(" ");
             }
-            contents.append(text);
         }
-        return contents;
     }
-    return "";
+}
+
+ExtractedContent extract_content(GumboNode* node) {
+    ExtractedContent content;
+    extract_content_recursive(node, content);
+    return content;
 }
 
 std::string decompress_gzip(const std::string& compressed_data) {

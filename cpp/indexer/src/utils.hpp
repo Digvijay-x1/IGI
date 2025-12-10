@@ -14,7 +14,12 @@ std::string get_env_or_default(const char* var, const std::string& def);
 std::string build_db_conn_str();
 
 // Extract clean text from a Gumbo parse tree, ignoring script/style tags.
-std::string clean_text(GumboNode* node);
+// Also extracts the title if found.
+struct ExtractedContent {
+    std::string text;
+    std::string title;
+};
+ExtractedContent extract_content(GumboNode* node);
 
 // Decompress a gzip-compressed string.
 std::string decompress_gzip(const std::string& compressed_data);
