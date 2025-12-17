@@ -1,4 +1,4 @@
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Digvijay-x1/Search-Engine?utm_source=oss&utm_medium=github&utm_campaign=Digvijay-x1%2FSearch-Engine&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Digvijay-x1/IGI?utm_source=oss&utm_medium=github&utm_campaign=Digvijay-x1%2FIGI&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 ## Setup
 
